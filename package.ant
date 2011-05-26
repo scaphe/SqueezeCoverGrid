@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project CoverArtViewer">
+<!--this file was created by Eclipse Runnable JAR Export Wizard-->
+<!--ANT 1.7 is required                                        -->
+<!-- Will create nice jar file for MacOS, use /Developer/Applications/Utilities/Jar Bundler to create initially (from jar) then run this -->
+<target name="create_run_jar">
+<property environment="env"/>
+<property name="bin" location="bin"/>
+<property name="jars" location="jars"/>
+
+<jar destfile="${env.HOME}/CoverArtGrid.app/Contents/Resources/Java/cav.jar" filesetmanifest="mergewithoutmain">
+<manifest>
+	<attribute name="Specification-Title" value="Java Advanced Imaging Image I/O Tools"/>
+	<attribute name="Specification-Version" value="1.0-mr"/>
+	<attribute name="Specification-Vendor" value="Sun Microsystems, Inc."/>
+	<attribute name="Implementation-Title" value="com.sun.media.imageio"/>
+	<attribute name="Implementation-Version" value="1.0_01"/>
+	<attribute name="Implementation-Vendor" value="Sun Microsystems, Inc."/>
+	<attribute name="Extension-Name" value="com.sun.media.imageio"/>
+<attribute name="Main-Class" value="com.project944.cov.MainViewer"/>
+<attribute name="Class-Path" value="."/>
+</manifest>
+<fileset dir="${bin}"/>
+<zipfileset excludes="META-INF/*.SF" src="${jars}/jai_imageio.jar"/>
+<zipfileset excludes="META-INF/*.SF" src="${jars}/javaslimserver.jar"/>
+<zipfileset excludes="META-INF/*.SF" src="${jars}/log4j-1.2.16.jar"/>
+</jar>
+</target>
+</project>

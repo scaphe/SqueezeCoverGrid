@@ -1,0 +1,68 @@
+<project name="MyProject" default="dist" basedir="."> <description>
+        simple example build file
+    </description>
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+  <property name="compile.debug"       value="true"/>
+
+<path id="classpath">
+ 	<fileset dir="jars" includes="jai_imageio.jar"/>
+ 	<fileset dir="jars" includes="javaslimserver.jar"/>
+ 	<fileset dir="jars" includes="log4j-1.2.16.jar"/>
+</path>
+
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac debug="on" srcdir="${src}" destdir="${build}">
+        <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <jar jarfile="${dist}/lib/MyProject-${DSTAMP}.jar" basedir="${build}">
+    <manifest>
+        <attribute name="Specification-Title" value="Java Advanced Imaging Image I/O Tools"/>
+        <attribute name="Specification-Version" value="1.0-mr"/>
+        <attribute name="Specification-Vendor" value="Sun Microsystems, Inc."/>
+        <attribute name="Implementation-Title" value="com.sun.media.imageio"/>
+        <attribute name="Implementation-Version" value="1.0_01"/>
+        <attribute name="Implementation-Vendor" value="Sun Microsystems, Inc."/>
+        <attribute name="Extension-Name" value="com.sun.media.imageio"/>
+        <attribute name="Main-Class" value="com.project944.cov.MainViewer"/>
+    </manifest>
+
+        <zipgroupfileset dir="jars" includes="*.jar" /> 
+        <fileset dir="."> 
+            <include name="**/*.MF"/>
+        </fileset>
+        <fileset dir="${src}"> 
+            <include name="**/*.tiff"/>
+            <include name="**/*.jpg"/>
+        </fileset>
+    </jar>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>
+
