@@ -1,5 +1,6 @@
 package com.project944.cov;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -67,6 +68,7 @@ import com.project944.cov.layoutmanagers.FilePersistedLayout;
 import com.project944.cov.sources.CachedOnFileSystemCS;
 import com.project944.cov.sources.CoverSource;
 import com.project944.cov.sources.SlimCoverSource;
+import com.project944.cov.utils.JPanel2;
 import com.project944.cov.utils.MyLogger;
 import com.project944.cov.utils.PropsUtils;
 
@@ -280,7 +282,7 @@ public class MainViewer extends JFrame implements MyLogger {
 		    }
         });
 		setTitle("Album Cover Viewer");
-		JPanel mainPanel = new JPanel(new BorderLayout());
+		JPanel mainPanel = new JPanel2(new BorderLayout());
 		mainPanel.setOpaque(true); mainPanel.setBackground(SystemColor.window);
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(mainPanel);
@@ -318,9 +320,10 @@ public class MainViewer extends JFrame implements MyLogger {
 			public void insertUpdate(DocumentEvent e) { changed(e); }
 			public void removeUpdate(DocumentEvent e) { changed(e); }
 		});
-		JPanel topPanel = new JPanel(new BorderLayout());
-		JPanel outerSrchPanel = new JPanel(new BorderLayout());
-		JPanel buttonsPanel = new JPanel(new FlowLayout());
+		JPanel topPanel = new JPanel2(new BorderLayout());
+        topPanel.setOpaque(true); topPanel.setBackground(SystemColor.window);
+		JPanel outerSrchPanel = new JPanel2(new BorderLayout());
+		JPanel buttonsPanel = new JPanel2(new FlowLayout());
 		final JButton playPauseButton = new JButton(">");
 		{
     		JButton button = new JButton("<<");
@@ -370,9 +373,10 @@ public class MainViewer extends JFrame implements MyLogger {
 		topPanel.add(outerSrchPanel, BorderLayout.NORTH);
 
 		// Preview pane
-		final JPanel previewAndScaler = new JPanel(new BorderLayout());
+		final JPanel previewAndScaler = new JPanel2(new BorderLayout());
 		final PreviewCoverPanel previewCover = new PreviewCoverPanel(this);
 		previewAndScaler.add(previewCover);
+		previewAndScaler.setOpaque(true); previewAndScaler.setBackground(SystemColor.window);
         previewAndScaler.setBorder(BorderFactory.createMatteBorder(0, 0, sideBorder/2, 0, SystemColor.window));
 		
         imagesPanel = new ImagesPanel(this, covers, playerInterface, previewCover, props.getInt(PropsUtils.iconSize));
@@ -381,13 +385,13 @@ public class MainViewer extends JFrame implements MyLogger {
         imagesPanel.setScrollPane(scrollPane);
 
 		// Make a slider for trying out different album sizes
-        JPanel outerSliderPanel = new JPanel(new BorderLayout());
-        JPanel sliderEtcPanel = new JPanel();
+        JPanel outerSliderPanel = new JPanel2(new BorderLayout());
+        JPanel sliderEtcPanel = new JPanel2();
         sliderEtcPanel.setLayout(new BoxLayout(sliderEtcPanel, BoxLayout.PAGE_AXIS));
         
         final JLabel sliderLabel = new JLabel("Icon size: "+imagesPanel.getSz()+"x"+imagesPanel.getSz(), SwingConstants.CENTER);
         sliderLabel.setFont(getSmallerFont(sliderLabel.getFont()));
-        JPanel sliderLabelP = new JPanel(new BorderLayout());
+        JPanel sliderLabelP = new JPanel2(new BorderLayout());
         sliderLabelP.add(sliderLabel);
         sliderLabel.setVisible(false);
         sliderEtcPanel.add(sliderLabelP);
@@ -403,18 +407,19 @@ public class MainViewer extends JFrame implements MyLogger {
 		sliderEtcPanel.add(slider);
 		
 		final JCheckBox editModeCheckbox = new JCheckBox("Edit positions");
+		editModeCheckbox.setOpaque(true); editModeCheckbox.setBackground(SystemColor.window);
 		editModeCheckbox.setFont(getSmallerFont(editModeCheckbox.getFont()));
 		editModeCheckbox.setHorizontalTextPosition(JCheckBox.LEADING);
 		
-		JPanel editModeCheckboxP = new JPanel(new BorderLayout());
+		JPanel editModeCheckboxP = new JPanel2(new BorderLayout());
 		editModeCheckboxP.add(editModeCheckbox, BorderLayout.EAST);
 		sliderEtcPanel.add(editModeCheckboxP);
 		
 		outerSliderPanel.add(sliderEtcPanel, BorderLayout.SOUTH);
 
-		JPanel srchFieldPanelW = new JPanel(new BorderLayout());
+		JPanel srchFieldPanelW = new JPanel2(new BorderLayout());
 		srchFieldPanelW.setLayout(new BoxLayout(srchFieldPanelW, BoxLayout.PAGE_AXIS));
-		JPanel srchFieldPanel = new JPanel(new BorderLayout());
+		JPanel srchFieldPanel = new JPanel2(new BorderLayout());
 		srchFieldPanel.add(new JLabel("Search"), BorderLayout.WEST);
 		srchFieldPanel.add(srchField);
         srchFieldPanelW.add(srchFieldPanel);

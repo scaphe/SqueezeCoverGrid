@@ -67,8 +67,7 @@ public class ImagesPanel extends JPanel {
         this.eventHandler = new StandardStateHandler(this);
         this.sz = sz;
         setupMouseEvents();
-        setOpaque(true);
-        setBackground(SystemColor.control);
+        setOpaque(true); setBackground(SystemColor.window);
     }
 
     private void setupMouseEvents() {
@@ -226,7 +225,11 @@ public class ImagesPanel extends JPanel {
     
     private void drawHighlight(Graphics g, Point scrnPos) {
         Graphics g2 = g.create(scrnPos.x - xgap, scrnPos.y - ygap/2, sz+xgap*2, sz+ygap);
-        g2.setColor(SystemColor.textHighlight);
+        Color col = SystemColor.textHighlight;
+        if ( (col.getRGB() & 0xffffff) == 0 ) {
+            col = SystemColor.textHighlightText;
+        }
+        g2.setColor(col);
         g2.fillRect(0, 0, sz+xgap*2, ygap/2);
         g2.fillRect(0, sz+ygap/2, sz+xgap*2, ygap/2);
         g2.fillRect(0, 0, xgap, sz+ygap*2);

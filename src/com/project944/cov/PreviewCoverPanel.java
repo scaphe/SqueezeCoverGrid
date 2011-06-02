@@ -24,6 +24,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
+import com.project944.cov.utils.JPanel2;
+
 /**
  * Show bigger image
  */
@@ -41,13 +43,13 @@ public class PreviewCoverPanel extends JPanel implements DropTargetListener {
 		this.mainViewer = mainViewer;
 		setLayout(null);
 		setPreferredSize(new Dimension( (IMAGE_SIZE+2*GAP_SIZE) *3, IMAGE_SIZE+2*GAP_SIZE+1));
-		JPanel borderPanel = new JPanel();
+		JPanel borderPanel = new JPanel2();
 		borderPanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, SystemColor.controlShadow, SystemColor.controlShadow));
 		add(borderPanel);
 		borderPanel.setBounds(0, 0, GAP_SIZE+IMAGE_SIZE+GAP_SIZE, GAP_SIZE+IMAGE_SIZE+GAP_SIZE);
 
-//		setOpaque(true);
-//		setBackground(Color.yellow);
+		setOpaque(true);
+		setBackground(SystemColor.window);
 	}
 	
 	public void paint(Graphics g) {

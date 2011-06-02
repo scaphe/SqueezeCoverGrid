@@ -35,7 +35,7 @@
     <mkdir dir="${dist}/lib"/>
 
     <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-    <jar jarfile="${dist}/lib/MyProject-${DSTAMP}.jar" basedir="${build}">
+    <jar jarfile="${dist}/lib/sqzcav.jar" basedir="${build}">
     <manifest>
         <attribute name="Specification-Title" value="Java Advanced Imaging Image I/O Tools"/>
         <attribute name="Specification-Version" value="1.0-mr"/>

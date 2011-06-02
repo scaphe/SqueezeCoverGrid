@@ -43,40 +43,38 @@ public class StandardStateHandler implements StateSpecificHandler {
     }
 
     public void mouseDragged(MouseEvent e) {
-        if ( e.getButton() == 1 ) {
-            if ( !editMode && !ctx.dragging ) {
-                if ( panCurr != null ) {
-                    Point pt = new Point(e.getX(), e.getY());
-                    if ( e.getComponent() != null ) {
-                        SwingUtilities.convertPointToScreen(pt, e.getComponent());
-                    }
-                    int deltaX = pt.x - panCurr.x;
-                    int deltaY = pt.y - panCurr.y;
-                    panCurr = pt;
-                    ctx.getScrollPane().getHorizontalScrollBar().setValue(-deltaX + ctx.getScrollPane().getHorizontalScrollBar().getValue());
-                    ctx.getScrollPane().getVerticalScrollBar().setValue(-deltaY + ctx.getScrollPane().getVerticalScrollBar().getValue());
+        if ( !editMode && !ctx.dragging ) {
+            if ( panCurr != null ) {
+                Point pt = new Point(e.getX(), e.getY());
+                if ( e.getComponent() != null ) {
+                    SwingUtilities.convertPointToScreen(pt, e.getComponent());
                 }
-            } else {
-                if ( ctx.dragging || ctx.rubberBanding ) {
-                    ctx.dragCurr = new Point(e.getX(), e.getY());
-                    
-                    if ( ctx.rubberBanding ) {
-                        Point startP = ctx.getXY(ctx.dragStart.x, ctx.dragStart.y);
-                        Point endP = ctx.getXY(ctx.dragCurr.x, ctx.dragCurr.y);
-                        int temp;
-                        if ( startP.x > endP.x ) { temp = startP.x; startP.x = endP.x; endP.x = temp; }
-                        if ( startP.y > endP.y ) { temp = startP.y; startP.y = endP.y; endP.y = temp; }
-                        ctx.clearSelection();
-                        for (CoverDetails cd : ctx.covers) {
-                            if ( cd.getX() >= startP.x && cd.getX() <= endP.x && 
-                                    cd.getY() >= startP.y && cd.getY() <= endP.y ) {
-                                ctx.addSelection(cd);
-                            }
+                int deltaX = pt.x - panCurr.x;
+                int deltaY = pt.y - panCurr.y;
+                panCurr = pt;
+                ctx.getScrollPane().getHorizontalScrollBar().setValue(-deltaX + ctx.getScrollPane().getHorizontalScrollBar().getValue());
+                ctx.getScrollPane().getVerticalScrollBar().setValue(-deltaY + ctx.getScrollPane().getVerticalScrollBar().getValue());
+            }
+        } else {
+            if ( ctx.dragging || ctx.rubberBanding ) {
+                ctx.dragCurr = new Point(e.getX(), e.getY());
+                
+                if ( ctx.rubberBanding ) {
+                    Point startP = ctx.getXY(ctx.dragStart.x, ctx.dragStart.y);
+                    Point endP = ctx.getXY(ctx.dragCurr.x, ctx.dragCurr.y);
+                    int temp;
+                    if ( startP.x > endP.x ) { temp = startP.x; startP.x = endP.x; endP.x = temp; }
+                    if ( startP.y > endP.y ) { temp = startP.y; startP.y = endP.y; endP.y = temp; }
+                    ctx.clearSelection();
+                    for (CoverDetails cd : ctx.covers) {
+                        if ( cd.getX() >= startP.x && cd.getX() <= endP.x && 
+                                cd.getY() >= startP.y && cd.getY() <= endP.y ) {
+                            ctx.addSelection(cd);
                         }
                     }
-                    
-                    ctx.mainRepaint();
                 }
+                
+                ctx.mainRepaint();
             }
         }
     }
