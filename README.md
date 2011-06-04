@@ -7,7 +7,9 @@ Allows you to play them on SqueezeboxTouch player via right click menu, choose a
 ## MacOS
 
 Build (mac application in directory macPkg, copy to where you like - thanks to http://www.informagen.com/JarBundler/):
+
 > ant macOS
+
 Run:
 Now use finder to navigate to macPkg directory, should be an application with grid icon there
 
@@ -18,8 +20,11 @@ If you want to debug then follow the Linux directions
 From shell
 
 Build:
+
 > ant
+
 Run:
+
 > ./cav.sh
 
 
