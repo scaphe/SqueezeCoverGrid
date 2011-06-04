@@ -4,8 +4,11 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -17,6 +20,7 @@ import com.project944.cov.MainViewer;
 import com.project944.cov.StateSpecificHandler;
 import com.project944.cov.TrackDetails;
 import com.project944.cov.actions.MoveAction;
+import com.project944.cov.utils.PointAtTime;
 
 public class StandardStateHandler implements StateSpecificHandler {
 
@@ -24,13 +28,18 @@ public class StandardStateHandler implements StateSpecificHandler {
     
     private CoverDetails coverSelected = null;
     private Point popupPos;
-    private Point panCurr;
+    private PointAtTime prevPanCurr;
+    private PointAtTime panCurr;
     
     private boolean editMode = false;
+
+    private Timer timer;
 
     
     public StandardStateHandler(ImagesPanel ctx) {
         this.ctx = ctx;
+        this.timer = new Timer();
+        startScrollTimer();
     }
     
     // Mouse over, show big version of image by updating the selected image
@@ -43,6 +52,7 @@ public class StandardStateHandler implements StateSpecificHandler {
     }
 
     public void mouseDragged(MouseEvent e) {
+        //System.out.println("Dragged at "+e.getX()+", "+e.getY());
         if ( !editMode && !ctx.dragging ) {
             if ( panCurr != null ) {
                 Point pt = new Point(e.getX(), e.getY());
@@ -51,7 +61,9 @@ public class StandardStateHandler implements StateSpecificHandler {
                 }
                 int deltaX = pt.x - panCurr.x;
                 int deltaY = pt.y - panCurr.y;
-                panCurr = pt;
+                prevPanCurr = panCurr;
+                panCurr = new PointAtTime(pt.x, pt.y);
+                //System.out.println("Set panCur to "+panCurr.x+", "+panCurr.y);
                 ctx.getScrollPane().getHorizontalScrollBar().setValue(-deltaX + ctx.getScrollPane().getHorizontalScrollBar().getValue());
                 ctx.getScrollPane().getVerticalScrollBar().setValue(-deltaY + ctx.getScrollPane().getVerticalScrollBar().getValue());
             }
@@ -83,7 +95,7 @@ public class StandardStateHandler implements StateSpecificHandler {
         if ( e.getButton() == 1 && ctx.isSomethingSelected() ) {
             if ( ctx.getSelectedCovers().size() == 1 ) {
                 for (CoverDetails cd : ctx.getSelectedCovers()) {
-                    ctx.playerInterface.enqueueAlbum(cd.getAlbum(), false);
+                    ctx.playerInterface.enqueueAlbum(cd, false);
                 }
             }
         }
@@ -122,7 +134,7 @@ public class StandardStateHandler implements StateSpecificHandler {
                         JMenuItem menuItem = new JMenuItem(cover.getArtist()+" - "+cover.getAlbum());
                         menuItem.addActionListener(new ActionListener() {
                             public void actionPerformed(ActionEvent e) {
-                                ctx.playerInterface.enqueueAlbum(cover.getAlbum(), shiftDown);
+                                ctx.playerInterface.enqueueAlbum(cover, shiftDown);
                             }
                         });
                         menu2.add(menuItem);
@@ -187,10 +199,12 @@ public class StandardStateHandler implements StateSpecificHandler {
     }
 
     public void mousePressed(MouseEvent e) {
-        panCurr = new Point(e.getX(), e.getY());
+        Point pt = new Point(e.getX(), e.getY());
         if ( e.getComponent() != null ) {
-            SwingUtilities.convertPointToScreen(panCurr, e.getComponent());
+            SwingUtilities.convertPointToScreen(pt, e.getComponent());
         }
+        panCurr = new PointAtTime(pt.x, pt.y);
+        prevPanCurr = panCurr;
         if ( e.getButton() == 1 ) {
             CoverDetails temp = ctx.getSelectedAt(e);
             if ( editMode || (temp != null && temp.isUndefinedPosition()) ) {
@@ -216,28 +230,82 @@ public class StandardStateHandler implements StateSpecificHandler {
     }
 
     public void mouseReleased(MouseEvent e) {
-        if ( e.getButton() == 1 ) {
-            if ( ctx.dragging ) {
-                // Move all the dragged covers
-                ctx.dragging = false;
-                Point startP = ctx.getXY(ctx.dragStart.x, ctx.dragStart.y);
-                Point endP = ctx.getXY(ctx.dragCurr.x, ctx.dragCurr.y);
-                Point pDelta = new Point(endP.x-startP.x, endP.y-startP.y);
-                if ( pDelta.x != 0 || pDelta.y != 0 ) {
-                    ctx.doAction(new MoveAction(ctx, ctx.getSelectedCovers(), pDelta));
+        System.out.println("MouseReleased at "+e.getX()+", "+e.getY());
+        if ( ctx.dragging ) {
+            // Move all the dragged covers
+            ctx.dragging = false;
+            Point startP = ctx.getXY(ctx.dragStart.x, ctx.dragStart.y);
+            Point endP = ctx.getXY(ctx.dragCurr.x, ctx.dragCurr.y);
+            Point pDelta = new Point(endP.x-startP.x, endP.y-startP.y);
+            if ( pDelta.x != 0 || pDelta.y != 0 ) {
+                ctx.doAction(new MoveAction(ctx, ctx.getSelectedCovers(), pDelta));
+            }
+            if ( !editMode ) {
+                ctx.clearSelection();
+            }
+            ctx.mainRepaint();
+        } else if ( ctx.rubberBanding ) {
+            // Select all the ones that the box touches
+            ctx.rubberBanding = false;
+            ctx.mainRepaint();
+        } else {
+            if ( !editMode && !ctx.dragging ) {
+                // Stopping drag
+                Point pt = new Point(e.getX(), e.getY());
+                if ( e.getComponent() != null ) {
+                    SwingUtilities.convertPointToScreen(pt, e.getComponent());
                 }
-                if ( !editMode ) {
-                    ctx.clearSelection();
+                double timeDelta = (panCurr.time-prevPanCurr.time)/1000000000.0d;
+                if ( timeDelta == 0 ) {
+                    timeDelta=1;
                 }
-                ctx.mainRepaint();
-            } else if ( ctx.rubberBanding ) {
-                // Select all the ones that the box touches
-                ctx.rubberBanding = false;
-                ctx.mainRepaint();
+                scrollPanDeltaX = -((prevPanCurr.x-panCurr.x)/timeDelta) /100;
+                scrollPanDeltaY = -((prevPanCurr.y-panCurr.y)/timeDelta) /100;
+                System.out.println("Delta is "+scrollPanDeltaX+", "+scrollPanDeltaY+", timeDelta="+timeDelta);
+                startScrollTimer();
             }
         }
     }
     
+    private volatile double scrollPanDeltaX=0;
+    private volatile double scrollPanDeltaY=0;
+    private TimerTask oldTimerTask = null;
+    private void startScrollTimer() {
+        synchronized (this) {
+            if ( oldTimerTask != null ) {
+                oldTimerTask.cancel();
+                oldTimerTask = null;
+            }
+        }
+        timer.schedule(oldTimerTask=new TimerTask() {
+            @Override
+            public void run() {
+                if ( (int)scrollPanDeltaX != 0 || (int)scrollPanDeltaY != 0 ) {
+                    final int deltaX = (int) scrollPanDeltaX;
+                    final int deltaY = (int) scrollPanDeltaY;
+                    try {
+                        SwingUtilities.invokeAndWait(new Runnable() {
+                            public void run() {
+                                ctx.getScrollPane().getHorizontalScrollBar().setValue(-deltaX + ctx.getScrollPane().getHorizontalScrollBar().getValue());
+                                ctx.getScrollPane().getVerticalScrollBar().setValue(-deltaY + ctx.getScrollPane().getVerticalScrollBar().getValue());
+                            }
+                        });
+                        double decel = 1.03;
+                        scrollPanDeltaX = scrollPanDeltaX / decel;
+                        scrollPanDeltaY = scrollPanDeltaY / decel;
+                    } catch (InterruptedException e) {
+                    } catch (InvocationTargetException e) {
+                    }
+                } else {
+                    synchronized (this) {
+                        oldTimerTask = null;
+                    }
+                    cancel();
+                }
+            }
+        }, 10, 10);
+    }
+
     public void setEditMode(boolean editMode) {
         this.editMode = editMode;
         ctx.clearSelection();

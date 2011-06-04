@@ -87,14 +87,7 @@ public class SlimCoverSource implements CoverSource {
             try {
                 int id = Integer.parseInt(album.getId());
                 albumTitle = album.getTitle();
-                artistName = "Unknown";
-                artists = db.getArtistsForAlbum(album);
-                if ( artists != null && artists.size() > 0 ) {
-                    SlimArtist artist = artists.iterator().next();
-                    artistName = artist.getArtist();
-                } else {
-                    System.out.println("Failed to find artists for album "+albumTitle);
-                }
+                artistName = getArtistForAlbum(db, album);
                 // Check if we already have this one, if so then don't bother getting the image which takes ages
                 CoverDetails matchingPrevCd = null;
                 for (CoverDetails prevCd : prevCovers) {
@@ -130,7 +123,7 @@ public class SlimCoverSource implements CoverSource {
 //                        System.out.println("Got track "+song.getTrack()+" : "+song.getTitle());
                 }
                 cover.setTrackNames(trackNames);
-            } catch (SlimDatabaseException e) {
+            } catch (Exception e) {
                 System.out.println("Failed at ["+albumTitle+"] by ["+artistName+"] with "+e);
                 e.printStackTrace();
             }
@@ -145,6 +138,25 @@ public class SlimCoverSource implements CoverSource {
         }
         logger.finished();
         return ans;
+    }
+
+    public static String getArtistForAlbum(SlimDatabase db, SlimAlbum album) {
+        String artistName = null;
+        Collection<SlimArtist> artists;
+        try {
+            artists = db.getArtistsForAlbum(album);
+            if ( artists != null && artists.size() > 0 ) {
+                SlimArtist artist = artists.iterator().next();
+                artistName = artist.getArtist();
+            }
+        } catch (SlimDatabaseException e) {
+            e.printStackTrace();
+        }
+        if ( artistName == null ) {
+            System.out.println("Failed to find artists for album "+album.getName());
+            return "Unknown";
+        }
+        return artistName;
     }
 
     private static int extractDisc(String albumTitle) {

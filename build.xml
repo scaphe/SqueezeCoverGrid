@@ -13,7 +13,6 @@
  	<fileset dir="jars" includes="log4j-1.2.16.jar"/>
 </path>
 
-
   <target name="init">
     <!-- Create the time stamp -->
     <tstamp/>
@@ -57,6 +56,37 @@
         </fileset>
     </jar>
   </target>
+
+
+	  <taskdef name="jarbundler"
+	             classname="net.sourceforge.jarbundler.JarBundler">
+	  	<classpath path="/usr/share/ant/lib/jarbundler-2.2.0.jar" />
+	  </taskdef>
+	
+	<target name="macOS" depends="compile" description="Make MacOS package">
+
+		<mkdir dir="macPkg"/>
+		
+		<jarbundler dir="macPkg"
+	              name="SqzCoverGrid"
+	              shortname="SqzCav"
+	              signature="sig"
+	              mainclass="com.project944.cov.MainViewer"
+	              jar="dist/lib/sqzcav.jar"
+	              icon="icons/SqzCav.icns"
+	              jvmversion="1.5+"
+	              version="1.0"
+	              infostring="Cover Art Viewer for SqueezeBox server"
+	              build="x" > 
+	                
+	    <!-- Adjust the look, feel and behavior -->
+	    
+	      <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+	      <javaproperty name="apple.awt.brushMetal" value="true"/>
+	                     
+	  </jarbundler>
+	    
+	</target>
 
   <target name="clean"
         description="clean up" >

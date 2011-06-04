@@ -6,7 +6,7 @@ import com.project944.cov.CoverDetails;
 
 public interface PlayerInterface {
 
-	void enqueueAlbum(String albumName, boolean playImmediately);
+	void enqueueAlbum(CoverDetails cover, boolean playImmediately);
 
     void enqueueTrack(CoverDetails cover, String trackName, boolean playImmediately);
 

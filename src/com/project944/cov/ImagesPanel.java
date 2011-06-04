@@ -41,7 +41,7 @@ public class ImagesPanel extends JPanel {
 
     public boolean rubberBanding = false;
     
-    public boolean dragging = false;
+    public volatile boolean dragging = false;
     public Point dragStart;
     public Point dragCurr;
 

@@ -20,6 +20,7 @@ import org.bff.slimserver.musicobjects.SlimAlbum;
 import org.bff.slimserver.musicobjects.SlimSong;
 
 import com.project944.cov.CoverDetails;
+import com.project944.cov.sources.SlimCoverSource;
 
 public class SlimPlayerInterface implements PlayerInterface {
     
@@ -65,9 +66,9 @@ public class SlimPlayerInterface implements PlayerInterface {
         }
     }
 
-    public void enqueueAlbum(String albumName, boolean playImmediately) {
+    public void enqueueAlbum(CoverDetails cover, boolean playImmediately) {
         SlimPlaylist playList = new SlimPlaylist(player);
-        SlimAlbum album = findAlbum(albumName);
+        SlimAlbum album = findAlbum(cover);
         if ( album != null ) {
             try {
                 if ( !isPlaying() || playImmediately ) {
@@ -85,7 +86,7 @@ public class SlimPlayerInterface implements PlayerInterface {
 
     public void enqueueTrack(CoverDetails cover, String trackName, boolean playImmediately) {
         SlimPlaylist playList = new SlimPlaylist(player);
-        SlimAlbum album = findAlbum(cover.getAlbum());
+        SlimAlbum album = findAlbum(cover);
         List<SlimSong> songs = new ArrayList<SlimSong>(db.listSongsForAlbum(album));
         for (SlimSong song : songs) {
             if ( trackName.equals(song.getTitle()) ) {
@@ -102,6 +103,9 @@ public class SlimPlayerInterface implements PlayerInterface {
                     e.printStackTrace();
                 }
             }
+        }
+        for (SlimSong song : songs) {
+            System.out.println("Checked ["+song.getTitle()+"]");
         }
         System.out.println("Failed to match track ["+trackName+"] in album "+cover.getAlbum());
     }
@@ -172,11 +176,14 @@ public class SlimPlayerInterface implements PlayerInterface {
         }
     }
     
-    private SlimAlbum findAlbum(String albumName) {
+    private SlimAlbum findAlbum(CoverDetails cover) {
         Collection<SlimAlbum> albums = db.getAlbums();
         for (SlimAlbum album : albums) {
-            if ( albumName.equals(album.getTitle()) ) {
-                return album;
+            if ( cover.getAlbum().equals(album.getTitle()) ) {
+                String artist = SlimCoverSource.getArtistForAlbum(db, album);
+                if ( cover.isVariousArtists() || cover.getArtist().equals(artist) ) {
+                    return album;
+                }
             }
         }
         return null;
