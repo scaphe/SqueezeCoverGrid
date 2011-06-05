@@ -15,10 +15,13 @@ Build (mac application in directory macPkg, copy to where you like - thanks to h
 > ant macOS
 
 Run:
+
 Now use finder to navigate to macPkg directory, should be an application with grid icon there
 
 Notes:
+
 If you don't want to build the code youself then:
+
 > click on Downloads (top right of page)
 > download the SqzCoverGrid.zip file
 > double click to expand it to show the built application
