@@ -81,3 +81,10 @@ You can **hide** albums that you don't want on the grid.  While in edit mode, ri
 on another "shelf" under the new shelf.  If you want the album back on the grid  you can just drag it back on.
 This hidden shelf is only visible in edit mode.
 
+
+# Thanks / Credits
+
+Thanks to [javaslimserver](http://code.google.com/p/javaslimserver) for the java api to the server, without which I wouldn't even have attempted this.
+
+Thanks to [JarBundler](http://www.informagen.com/JarBundler) for writing an easy to use ant task to make MacOS application bundles.
+
