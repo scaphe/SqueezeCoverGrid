@@ -6,6 +6,8 @@ Trying to bring a more visual experience akin to browsing a shelf of cds to Sque
 
 # Build/Install
 
+Note that this application comes with absolutely no guarentee, other than, I use it.
+
 ## MacOS
 
 Build (mac application in directory macPkg, copy to where you like - thanks to http://www.informagen.com/JarBundler/):
@@ -16,6 +18,12 @@ Run:
 Now use finder to navigate to macPkg directory, should be an application with grid icon there
 
 Notes:
+If you don't want to build the code youself then:
+> click on Downloads (top right of page)
+> download the SqzCoverGrid.zip file
+> double click to expand it to show the built application
+> double click application (with a grid icon) to start
+
 If you want to debug then follow the Linux directions
 
 ## Linux
