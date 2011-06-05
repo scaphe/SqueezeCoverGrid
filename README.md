@@ -66,7 +66,7 @@ If  you just want to force-update a single album then in edit mode you can right
 The gui will check for updates (checks if number of albums on server changes) once every 5 minutes automatically, if finds changes then
 will do an update.
 
-You can *hide* albums that you don't want on the grid.  While in edit mode, right click, choose hide.  This will put the cover
+You can **hide** albums that you don't want on the grid.  While in edit mode, right click, choose hide.  This will put the cover
 on another "shelf" under the new shelf.  If you want the album back on the grid  you can just drag it back on.
 This hidden shelf is only visible in edit mode.
 
