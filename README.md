@@ -22,10 +22,10 @@ Notes:
 
 If you don't want to build the code youself then:
 
-    > click on Downloads (top right of page),
-    > download the SqzCoverGrid.zip file,
-    > double click to expand it to show the built application,
-    > double click application (with a grid icon) to start
+    click on Downloads (top right of page),
+    download the SqzCoverGrid.zip file,
+    double click to expand it to show the built application,
+    double click application (with a grid icon) to start
 
 If you want to debug then follow the Linux directions
 
@@ -34,11 +34,11 @@ From shell
 
 Build:
 
-> ant
+    > ant
 
 Run:
 
-> ./cav.sh
+    > ./cav.sh
 
 
 ## Windows (untested)
@@ -46,11 +46,11 @@ From command window
 
 Build:
 
-> ant
+    > ant
 
 Run
 
-> .\cav.bat
+    > .\cav.bat
 
 
 # User Guide
