@@ -18,6 +18,7 @@ import org.json.JSONTokener;
 
 import com.project944.cov.CoverDetails;
 import com.project944.cov.utils.MyLogger;
+import com.project944.cov.utils.MyProgressTracker;
 import com.project944.cov.utils.PropsUtils;
 
 /**
@@ -43,7 +44,7 @@ public class CachedOnFileSystemCS implements CoverSource {
         return new File(PropsUtils.getCacheDir() + "/covers.json");
     }
 
-    public List<CoverDetails> getCovers(MyLogger logger) {
+    public List<CoverDetails> getCovers(MyProgressTracker logger) {
         // Read back all tracks as saved
         // Read back all images as we go
         List<CoverDetails> covers = new LinkedList<CoverDetails>();
@@ -71,7 +72,9 @@ public class CachedOnFileSystemCS implements CoverSource {
                 boolean loadImages = true;
                 if ( loadImages ) {
                     int count = 0;
+                    logger.setMinMax(0, covers.size());
                     for (CoverDetails cover : covers) {
+                        logger.setProgress(count);
                         if ( (count % 50) == 0 ) {
                             logger.log("Loaded "+count+" out of "+covers.size());
                         }
@@ -137,7 +140,7 @@ public class CachedOnFileSystemCS implements CoverSource {
      }
 
     
-    public List<CoverDetails> refreshFromServer(List<CoverDetails> prevCovers, boolean forceRefreshAttempt, MyLogger logger) {
+    public List<CoverDetails> refreshFromServer(List<CoverDetails> prevCovers, boolean forceRefreshAttempt, MyProgressTracker logger) {
         throw new UnsupportedOperationException("no server to refresh from?");
     }
 

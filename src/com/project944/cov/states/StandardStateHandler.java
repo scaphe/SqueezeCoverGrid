@@ -1,6 +1,7 @@
 package com.project944.cov.states;
 
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -35,10 +36,14 @@ public class StandardStateHandler implements StateSpecificHandler {
 
     private Timer timer;
 
+    private int menuMask;
+
     
     public StandardStateHandler(ImagesPanel ctx) {
         this.ctx = ctx;
         this.timer = new Timer();
+        menuMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+        System.out.println("Mask is "+menuMask);
         startScrollTimer();
     }
     
@@ -52,8 +57,8 @@ public class StandardStateHandler implements StateSpecificHandler {
     }
 
     public void mouseDragged(MouseEvent e) {
-        //System.out.println("Dragged at "+e.getX()+", "+e.getY());
-        if ( !editMode && !ctx.dragging ) {
+        //System.out.println("Dragged at "+e.getX()+", "+e.getY()+(((e.getModifiersEx()&menuMask)>0)?" MENU":"")+e.getModifiersEx());
+        if ( isCtrlDown(e) || (!editMode && !ctx.dragging) ) {
             if ( panCurr != null ) {
                 Point pt = new Point(e.getX(), e.getY());
                 if ( e.getComponent() != null ) {
@@ -91,11 +96,15 @@ public class StandardStateHandler implements StateSpecificHandler {
         }
     }
 
+    private boolean isCtrlDown(MouseEvent e) {
+        return e.isControlDown() || e.isMetaDown();
+    }
+
     private void doubleClick(MouseEvent e) {
         if ( e.getButton() == 1 && ctx.isSomethingSelected() ) {
             if ( ctx.getSelectedCovers().size() == 1 ) {
                 for (CoverDetails cd : ctx.getSelectedCovers()) {
-                    ctx.playerInterface.enqueueAlbum(cd, false);
+                    ctx.getPlayerInterface().enqueueAlbum(cd, false);
                 }
             }
         }
@@ -134,7 +143,7 @@ public class StandardStateHandler implements StateSpecificHandler {
                         JMenuItem menuItem = new JMenuItem(cover.getArtist()+" - "+cover.getAlbum());
                         menuItem.addActionListener(new ActionListener() {
                             public void actionPerformed(ActionEvent e) {
-                                ctx.playerInterface.enqueueAlbum(cover, shiftDown);
+                                ctx.getPlayerInterface().enqueueAlbum(cover, shiftDown);
                             }
                         });
                         menu2.add(menuItem);
@@ -145,7 +154,7 @@ public class StandardStateHandler implements StateSpecificHandler {
                             menuItem = new JMenuItem(counter+" - "+track.getTitle()+" ["+formatTrackTime(track.getLengthSeconds())+"]");
                             menuItem.addActionListener(new ActionListener() {
                                 public void actionPerformed(ActionEvent e) {
-                                    ctx.playerInterface.enqueueTrack(cover, track.getTitle(), shiftDown);
+                                    ctx.getPlayerInterface().enqueueTrack(cover, track.getTitle(), shiftDown);
                                 }
                             });
                             menu2.add(menuItem);
@@ -207,19 +216,21 @@ public class StandardStateHandler implements StateSpecificHandler {
         prevPanCurr = panCurr;
         if ( e.getButton() == 1 ) {
             CoverDetails temp = ctx.getSelectedAt(e);
-            if ( editMode || (temp != null && temp.isUndefinedPosition()) ) {
-                if ( !e.isShiftDown() && !ctx.isSelected(temp) ) {
-                    ctx.clearSelection();
-                }
-                if ( e.isShiftDown() && ctx.isSelected(temp) ) {
-                    ctx.removeSelection(temp);
-                } else {
-                    ctx.addSelection(temp);
-                }
-                if ( temp != null ) {
-                    ctx.dragging = true;
-                } else {
-                    ctx.rubberBanding = true;
+            if ( !isCtrlDown(e) ) {
+                if ( editMode || (temp != null && temp.isUndefinedPosition()) ) {
+                    if ( !e.isShiftDown() && !ctx.isSelected(temp) ) {
+                        ctx.clearSelection();
+                    }
+                    if ( e.isShiftDown() && ctx.isSelected(temp) ) {
+                        ctx.removeSelection(temp);
+                    } else {
+                        ctx.addSelection(temp);
+                    }
+                    if ( temp != null ) {
+                        ctx.dragging = true;
+                    } else {
+                        ctx.rubberBanding = true;
+                    }
                 }
             }
             ctx.dragStart = new Point(e.getX(), e.getY());
@@ -249,7 +260,7 @@ public class StandardStateHandler implements StateSpecificHandler {
             ctx.rubberBanding = false;
             ctx.mainRepaint();
         } else {
-            if ( !editMode && !ctx.dragging ) {
+            if ( isCtrlDown(e) || (!editMode && !ctx.dragging) ) {
                 // Stopping drag
                 Point pt = new Point(e.getX(), e.getY());
                 if ( e.getComponent() != null ) {

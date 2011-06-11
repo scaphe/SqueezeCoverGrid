@@ -51,23 +51,24 @@ public class ImagesPanel extends JPanel {
     private StateSpecificHandler eventHandler;
     public MainViewer mainViewer;
     private JScrollPane scrollPane;
-    public PlayerInterface playerInterface;
     public PreviewCoverPanel previewCover;
     private boolean editMode;
 
     public ImagesPanel(MainViewer mainViewer,
                        List<CoverDetails> covers,
-                       PlayerInterface playerInterface,
                        PreviewCoverPanel previewCover,
                        int sz) {
         this.mainViewer = mainViewer;
         this.covers = covers;
-        this.playerInterface = playerInterface;
         this.previewCover = previewCover;
         this.eventHandler = new StandardStateHandler(this);
         this.sz = sz;
         setupMouseEvents();
         setOpaque(true); setBackground(SystemColor.window);
+    }
+    
+    public PlayerInterface getPlayerInterface() {
+        return mainViewer.getPlayerInterface();
     }
 
     private void setupMouseEvents() {

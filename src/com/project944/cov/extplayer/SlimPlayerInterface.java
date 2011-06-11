@@ -88,8 +88,9 @@ public class SlimPlayerInterface implements PlayerInterface {
         SlimPlaylist playList = new SlimPlaylist(player);
         SlimAlbum album = findAlbum(cover);
         List<SlimSong> songs = new ArrayList<SlimSong>(db.listSongsForAlbum(album));
+        String cleanedTrackName = new String(trackName.getBytes());
         for (SlimSong song : songs) {
-            if ( trackName.equals(song.getTitle()) ) {
+            if ( cleanedTrackName.equals(new String(song.getTitle().getBytes())) ) {
                 try {
                     if ( !isPlaying() || playImmediately ) {
                         playList.insertItem(song);

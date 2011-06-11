@@ -1,9 +1,9 @@
 package com.project944.cov;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuItem;
@@ -21,8 +21,11 @@ import java.awt.event.WindowFocusListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
@@ -41,6 +44,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextArea;
@@ -57,10 +61,16 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 
+import org.apache.log4j.BasicConfigurator;
+import org.bff.slimserver.SlimAppPlugin;
 import org.bff.slimserver.SlimPlayer;
 import org.bff.slimserver.SlimServer;
+import org.bff.slimserver.SlimSpotifyPlugin;
 import org.bff.slimserver.exception.SlimConnectionException;
+import org.bff.slimserver.musicobjects.app.SlimAvailableApp;
+import org.bff.slimserver.musicobjects.radio.SlimAvailableRadio;
 
+import com.project944.cov.extplayer.NullPlayerInterface;
 import com.project944.cov.extplayer.PlayerInterface;
 import com.project944.cov.extplayer.SlimPlayerInterface;
 import com.project944.cov.layoutmanagers.CoversLayoutManager;
@@ -69,11 +79,11 @@ import com.project944.cov.sources.CachedOnFileSystemCS;
 import com.project944.cov.sources.CoverSource;
 import com.project944.cov.sources.SlimCoverSource;
 import com.project944.cov.utils.JPanel2;
-import com.project944.cov.utils.MyLogger;
+import com.project944.cov.utils.MyProgressTracker;
 import com.project944.cov.utils.PropsUtils;
 
 
-public class MainViewer extends JFrame implements MyLogger {
+public class MainViewer extends JFrame implements MyProgressTracker {
     private final CoversLayoutManager coversLayoutManager;
 	private List<CoverDetails> covers = new LinkedList<CoverDetails>();
 	
@@ -82,20 +92,23 @@ public class MainViewer extends JFrame implements MyLogger {
 	private Executor executor = Executors.newSingleThreadExecutor();
 	private JScrollPane scrollPane;
     private PlayerInterface playerInterface;
-    private int sideBorder = 20;
+    public static final int sideBorder = 20;
     private PropsUtils props;
     private CoverSource coverSource;
 
     private JLabel statusBar;
 
     private Timer timer;
+    private JProgressBar progressBar;
+    private SlimServer slimServer;
 
 	
-	public MainViewer(CoversLayoutManager coversLayoutManager, PlayerInterface playerInterface, PropsUtils props, CoverSource coverSource) {
+	public MainViewer(CoversLayoutManager coversLayoutManager, PlayerInterface playerInterface, PropsUtils props, CoverSource coverSource, SlimServer slimServer) {
 	    this.coversLayoutManager = coversLayoutManager;
 		this.playerInterface = playerInterface;
 		this.props = props;
 		this.coverSource = coverSource;
+		this.slimServer = slimServer;
 		setup();
 
         this.timer = new Timer();
@@ -114,6 +127,20 @@ public class MainViewer extends JFrame implements MyLogger {
         }, 60*1000, 15*60*1000);  // Check number of albums not changed every 15 minutes
 	}
 	
+	public PlayerInterface getPlayerInterface() {
+	    return playerInterface;
+	}
+	
+	public void setMinMax(int min, int max) {
+	    progressBar.setVisible(true);
+	    progressBar.setMinimum(min);
+	    progressBar.setMaximum(max);
+	}
+	
+	public void setProgress(int value) {
+	    progressBar.setValue(value);
+	}
+	
 	public void log(final String msg) {
 	    if ( msg.length() > 0 ) {
 	        System.out.println(msg);
@@ -128,6 +155,7 @@ public class MainViewer extends JFrame implements MyLogger {
 	}
 	public void finished() {
 	    log("");
+	    progressBar.setVisible(false);
 	}
 
     private void safeSetCovers(final List<CoverDetails> updatedCovers) {
@@ -145,7 +173,9 @@ public class MainViewer extends JFrame implements MyLogger {
 	 * Setup the gui window
 	 */
 	private void setup() {
-	    addWindowFocusListener(new WindowFocusListener() {
+        final JPanel topPanel = new JPanel2(new BorderLayout());
+
+        addWindowFocusListener(new WindowFocusListener() {
             public void windowLostFocus(WindowEvent e) {
                 while ( visibleMenus.size() > 0 ) {
                     JPopupMenu menu = visibleMenus.remove(0);
@@ -210,7 +240,8 @@ public class MainViewer extends JFrame implements MyLogger {
 		        public void actionPerformed(ActionEvent e) {
 		            ServerConnections serverConnections = getServerConnections(props, true);
 		            if ( serverConnections != null ) {
-		                playerInterface = getPlayerInterface(props, serverConnections.slimServer, false);
+		                playerInterface = getPlayerInterface(props, serverConnections.slimServer, false, MainViewer.this);
+		                slimServer = serverConnections.slimServer;
 		                coverSource = serverConnections.coverSource;
 		            }
 		        }
@@ -221,17 +252,39 @@ public class MainViewer extends JFrame implements MyLogger {
 		    MenuItem item = new MenuItem("Change player");
 		    item.addActionListener(new ActionListener() {
 		        public void actionPerformed(ActionEvent e) {
-		            ServerConnections serverConnections = getServerConnections(props, true);
-		            if ( serverConnections != null ) {
-		                playerInterface = getPlayerInterface(props, serverConnections.slimServer, true);
-		                coverSource = serverConnections.coverSource;
-		            }
+		            playerInterface = getPlayerInterface(props, slimServer, true, MainViewer.this);
 		        }
 		    });
 		    actionsMenu.add(item);
 		}
 		mainMenu.add(actionsMenu);
-		
+
+        Menu viewMenu = new Menu("View");
+        {
+            final MenuItem item = new MenuItem("Hide control panel");
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    executor.execute(new Runnable() {
+                        public void run() {
+                            handleShowHideMenuItem(item, topPanel);
+                        }
+
+                        private void handleShowHideMenuItem(MenuItem item, JPanel topPanel) {
+                            if (item.getLabel().startsWith("Show ")) {
+                                topPanel.setVisible(true);
+                                item.setLabel("Hide" + item.getLabel().substring(4));
+                            } else {
+                                topPanel.setVisible(false);
+                                item.setLabel("Show" + item.getLabel().substring(4));
+                            }
+                        }
+                    });
+                }
+            });
+            viewMenu.add(item);
+        }
+        mainMenu.add(viewMenu);
+
 		Menu aboutMenu = new Menu("Help");
 		MenuItem helpMI = new MenuItem("Overview");
 		helpMI.addActionListener(new ActionListener() {
@@ -320,7 +373,6 @@ public class MainViewer extends JFrame implements MyLogger {
 			public void insertUpdate(DocumentEvent e) { changed(e); }
 			public void removeUpdate(DocumentEvent e) { changed(e); }
 		});
-		JPanel topPanel = new JPanel2(new BorderLayout());
         topPanel.setOpaque(true); topPanel.setBackground(SystemColor.window);
 		JPanel outerSrchPanel = new JPanel2(new BorderLayout());
 		JPanel buttonsPanel = new JPanel2(new FlowLayout());
@@ -379,7 +431,7 @@ public class MainViewer extends JFrame implements MyLogger {
 		previewAndScaler.setOpaque(true); previewAndScaler.setBackground(SystemColor.window);
         previewAndScaler.setBorder(BorderFactory.createMatteBorder(0, 0, sideBorder/2, 0, SystemColor.window));
 		
-        imagesPanel = new ImagesPanel(this, covers, playerInterface, previewCover, props.getInt(PropsUtils.iconSize));
+        imagesPanel = new ImagesPanel(this, covers, previewCover, props.getInt(PropsUtils.iconSize));
         scrollPane = new JScrollPane(imagesPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         imagesPanel.setScrollPane(scrollPane);
@@ -456,9 +508,18 @@ public class MainViewer extends JFrame implements MyLogger {
 	      
 		scrollPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, SystemColor.controlShadow, SystemColor.controlShadow));
         mainPanel.add(scrollPane);
+        JPanel statusPanel = new JPanel(new BorderLayout());
         statusBar = new JLabel("");
         statusBar.setPreferredSize(new Dimension(500, sideBorder));
-        mainPanel.add(statusBar, BorderLayout.SOUTH);
+        statusPanel.add(statusBar);
+        
+        progressBar = new JProgressBar(0, 10);
+        progressBar.setValue(0);
+        progressBar.setStringPainted(true);
+        progressBar.setVisible(false);
+        statusPanel.add(progressBar, BorderLayout.EAST);
+
+        mainPanel.add(statusPanel, BorderLayout.SOUTH);
         mainPanel.setBorder(BorderFactory.createMatteBorder(sideBorder/2, sideBorder, 0, sideBorder, SystemColor.window));
         mainPanel.registerKeyboardAction(srchFieldGetFocus, KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_DOWN_MASK), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
         mainPanel.registerKeyboardAction(srchFieldGetFocus, KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -516,7 +577,19 @@ public class MainViewer extends JFrame implements MyLogger {
             SlimServer slimServer = null;
             try {
                 System.out.println("Trying to connect to " + serverUrl);
-                slimServer = new SlimServer(serverUrl);
+                if ( serverUrl.indexOf(':') > 0 ) {
+                    String[] bits = serverUrl.split(":");
+                    if ( bits.length == 2 ) {
+                        slimServer = new SlimServer(bits[0], Integer.parseInt(bits[1]));
+                    } else if ( bits.length == 3 ) {
+                        slimServer = new SlimServer(bits[0], Integer.parseInt(bits[1]), Integer.parseInt(bits[2]));
+                    } else {
+                        System.out.println("Bad url? ["+serverUrl+"], expecting url:webport or url:cliport:webport");
+                        slimServer = new SlimServer(serverUrl);
+                    }
+                } else {
+                    slimServer = new SlimServer(serverUrl);
+                }
                 CoverSource coverSource = new SlimCoverSource(slimServer, noteImage, new CachedOnFileSystemCS());
                 if ( !serverUrl.equals(oldServerUrl) ) {
                     props.setString(PropsUtils.serverHost, serverUrl);
@@ -524,30 +597,75 @@ public class MainViewer extends JFrame implements MyLogger {
                 }
                 return new ServerConnections(slimServer, coverSource);
             } catch (SlimConnectionException e) {
-                JOptionPane.showMessageDialog(null, "Failed to connect with "+e);
+                JOptionPane.showMessageDialog(null, "Failed to connect to ["+serverUrl+"] with "+e);
             } catch (IOException e) {
-                JOptionPane.showMessageDialog(null, "Failed to get covers with "+e);
+                JOptionPane.showMessageDialog(null, "Failed to get covers from ["+serverUrl+"] with "+e);
             }
         }
     }
     
-    private static PlayerInterface getPlayerInterface(PropsUtils props, SlimServer slimServer, boolean wantChoose) {
+    private static PlayerInterface getPlayerInterface(PropsUtils props, SlimServer slimServer, boolean forceChoose, Frame frame) {
         Collection<SlimPlayer> players = slimServer.getSlimPlayers();
         String playerName = props.getString(PropsUtils.playerName);
+        SlimPlayer chosenPlayer = null;
+        String chosenPlayerName = null;
+        Map<String, SlimPlayer> playerNames = new HashMap<String, SlimPlayer>();
         for (SlimPlayer player : players) {
             try {
-                if ( playerName.equals("*") || playerName.equals(player.getName()) ) {
-                    return new SlimPlayerInterface(slimServer, player);
+                // Make set of names for later use in choosing, cope with duplicate names
+                String name = player.getName();
+                int count = 1;
+                while ( playerNames.containsKey(name) ) {
+                    count++;
+                    name = player.getName() + " " + count;
+                }
+                playerNames.put(name, player);
+                
+                // If matches then keep it
+                if ( playerName.equals("*") ) {
+                    if ( chosenPlayer == null ) {
+                        chosenPlayer = player;
+                        chosenPlayerName = name;
+                    }
+                } else if ( playerName.equals(player.getName()) ) {
+                    chosenPlayer = player;
+                    chosenPlayerName = name;
                 }
             } catch (SlimConnectionException e) {
                 System.out.println("Failed to get player name with "+e);
             }
         }
-        return null;
+        if ( !forceChoose && chosenPlayer != null ) {
+            return new SlimPlayerInterface(slimServer, chosenPlayer);
+        }
+        if ( playerNames.size() > 0 ) {
+            // Ask them which one they want
+            List<String> keys = new ArrayList<String>(playerNames.keySet());
+            Collections.sort(keys);
+            Object chosenName = PlayerChooserDialog.showDialog(frame, "Choose Player", keys.toArray(), chosenPlayerName);
+            if ( chosenName != null && playerNames.get(chosenName) != null ) {
+                // Remember choice for restart
+                try {
+                    props.setString(PropsUtils.playerName, playerNames.get(chosenName).getName());
+                } catch (SlimConnectionException e) {
+                    e.printStackTrace();
+                }
+                chosenPlayer = playerNames.get(chosenName);
+            }
+        } else {
+            // Say no players found
+            JOptionPane.showMessageDialog(null, "No connected players found");
+        }
+        
+        if ( chosenPlayer != null ) {
+            return new SlimPlayerInterface(slimServer, chosenPlayer);
+        }
+        return new NullPlayerInterface();
     }
 
     
 	public static void main(String[] args) throws Exception {
+	    BasicConfigurator.configure();
 	    PropsUtils props = new PropsUtils();
 		ImagesPanel.loadImages();
         ServerConnections serverConnection = getServerConnections(props, false);
@@ -555,16 +673,42 @@ public class MainViewer extends JFrame implements MyLogger {
             JOptionPane.showMessageDialog(null, "Failed to connect to server, exiting");
             System.exit(2);
         }
+        
+        if ( false ) {
+            doServerTests(serverConnection.slimServer);
+        }
+        
         FilePersistedLayout coversLayoutManager = new FilePersistedLayout("cv-layout.txt");
 		// Now show all the images?
-        PlayerInterface playerInterface = getPlayerInterface(props, serverConnection.slimServer, false);
+        PlayerInterface playerInterface = getPlayerInterface(props, serverConnection.slimServer, false, null);
         if ( playerInterface == null ) {
             System.out.println("Failed to find player?");
         }
 
-		MainViewer g = new MainViewer(coversLayoutManager, playerInterface, props, serverConnection.coverSource);
+		MainViewer g = new MainViewer(coversLayoutManager, playerInterface, props, serverConnection.coverSource, serverConnection.slimServer);
 		g.setVisible(true);
 	}
+
+    private static void doServerTests(SlimServer slimServer) throws Exception {
+        SlimAppPlugin appPlugin = new SlimAppPlugin(slimServer);
+        Collection<SlimAvailableApp> apps = appPlugin.getAvailableApps();
+        SlimAvailableApp spotify = null;
+        for (SlimAvailableApp app : apps) {
+            System.out.println("Found app "+app.getCommand()+" called "+app.getName()+" of type "+app.getType());
+            if ( "Spotify".equals(app.getName()) ) {
+                spotify = app;
+            }
+        }
+
+        SlimSpotifyPlugin plugin = new SlimSpotifyPlugin(slimServer);
+        Collection<SlimAvailableRadio> radios = plugin.getAvailableRadios();
+        for (SlimAvailableRadio radio : radios) {
+            System.out.println("Got radio of "+radio.getName());
+        }
+        
+        System.exit(1);
+    }
+
 
     static List<JPopupMenu> visibleMenus = new LinkedList<JPopupMenu>();
     public static void registerVisibleMenu(JPopupMenu menu2) {

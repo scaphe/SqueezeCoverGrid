@@ -12,7 +12,7 @@ public class PropsUtils {
     public final static String mainWindowHeight = "mainWindowHeight";
     public final static String iconSize = "iconSize";
     public final static String serverHost = "serverHost";
-    public final static String playerName = "playerName";
+    public final static String playerName = "*";
     
     private Properties props = new Properties();
     

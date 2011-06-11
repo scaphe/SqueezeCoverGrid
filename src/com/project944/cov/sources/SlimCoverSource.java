@@ -24,7 +24,7 @@ import org.bff.slimserver.musicobjects.SlimSong;
 
 import com.project944.cov.CoverDetails;
 import com.project944.cov.TrackDetails;
-import com.project944.cov.utils.MyLogger;
+import com.project944.cov.utils.MyProgressTracker;
 
 public class SlimCoverSource implements CoverSource {
 
@@ -53,7 +53,7 @@ public class SlimCoverSource implements CoverSource {
         }
     }
     
-    public List<CoverDetails> getCovers(MyLogger logger) {
+    public List<CoverDetails> getCovers(MyProgressTracker logger) {
         List<CoverDetails> ans = cache.getCovers(logger);
         if ( ans.size() == 0 ) {
             System.out.println("No cache so reading from slimserver");
@@ -62,7 +62,7 @@ public class SlimCoverSource implements CoverSource {
         return ans;
     }
 
-    public List<CoverDetails> refreshFromServer(List<CoverDetails> prevCovers, boolean forceRefreshAttempt, MyLogger logger) {
+    public List<CoverDetails> refreshFromServer(List<CoverDetails> prevCovers, boolean forceRefreshAttempt, MyProgressTracker logger) {
         List<CoverDetails> covers = new LinkedList<CoverDetails>();
         SlimDatabase db = new SlimDatabase(slimServer);
         Collection<SlimAlbum> albums = db.getAlbums();
@@ -73,9 +73,11 @@ public class SlimCoverSource implements CoverSource {
         if ( prevCovers.size() == albums.size() ) {
             logger.log("Diff size, I have "+prevCovers.size()+" vs "+albums.size());
         }
+        logger.setMinMax(0, albums.size());
         int count = 0;
         for (SlimAlbum album : albums) {
             count++;
+            logger.setProgress(count);
 //            if ( count > 10 ) break;
 //            if ( album.getTitle().equals("3121") ) System.exit(1);
             if ( (count%10) == 0 ) {
