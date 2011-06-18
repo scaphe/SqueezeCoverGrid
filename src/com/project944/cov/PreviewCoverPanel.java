@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.border.BevelBorder;
 
 import com.project944.cov.utils.JPanel2;
+import com.project944.cov.utils.PropsUtils;
 
 /**
  * Show bigger image
@@ -52,6 +53,16 @@ public class PreviewCoverPanel extends JPanel implements DropTargetListener {
 		setBackground(SystemColor.window);
 	}
 	
+	public static class ArtistAlbum {
+	    public final String artist;
+	    public final String album;
+        public ArtistAlbum(String artist, String album) {
+            super();
+            this.artist = artist;
+            this.album = album;
+        }
+	}
+	
 	public void paint(Graphics g) {
 		super.paint(g);
 		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
@@ -62,30 +73,37 @@ public class PreviewCoverPanel extends JPanel implements DropTargetListener {
 //		        GAP_SIZE+IMAGE_SIZE+GAP_SIZE,
 //		        GAP_SIZE+IMAGE_SIZE+GAP_SIZE,
 //		        7, 7);
-		String artist = "Artist";
-		String album = "Album";
-		if ( getSelectedCover() != null ) {
-			g.drawImage(getSelectedCover().getImage(),
-			        GAP_SIZE, GAP_SIZE,
-			        GAP_SIZE+IMAGE_SIZE, GAP_SIZE+IMAGE_SIZE,
-			        0, 0, 
-					getSelectedCover().getWidth(), getSelectedCover().getHeight(), null);
-			artist = getSelectedCover().getArtist();
-			int numDiscs = getSelectedCover().getOtherDiscs()==null?0:getSelectedCover().getOtherDiscs().size()+1;
-			if ( numDiscs > 0 ) {
-			    artist += " ("+numDiscs+" discs)";
-			}
-			album = CoverDetails.trimDisc(getSelectedCover().getAlbum());
-		}
+		ArtistAlbum aa = getArtistAlbum();
+        if ( getSelectedCover() != null ) {
+            g.drawImage(getSelectedCover().getImage(),
+                    GAP_SIZE, GAP_SIZE,
+                    GAP_SIZE+IMAGE_SIZE, GAP_SIZE+IMAGE_SIZE,
+                    0, 0, 
+                    getSelectedCover().getWidth(), getSelectedCover().getHeight(), null);
+        }
 		// Draw text
 		g.setColor(Color.black);
 		setFontBold(g);
 		int fheight = g.getFontMetrics().getHeight();
 		int offset = fheight*1;
-		g.drawString(artist, GAP_SIZE+IMAGE_SIZE+GAP_SIZE+GAP_SIZE, GAP_SIZE+IMAGE_SIZE/2 +fheight/2 - offset);
-		g.drawString(album, GAP_SIZE+IMAGE_SIZE+GAP_SIZE+GAP_SIZE, GAP_SIZE+IMAGE_SIZE/2 +fheight/2 + offset);
+		g.drawString(aa.artist, GAP_SIZE+IMAGE_SIZE+GAP_SIZE+GAP_SIZE, GAP_SIZE+IMAGE_SIZE/2 +fheight/2 - offset);
+		g.drawString(aa.album, GAP_SIZE+IMAGE_SIZE+GAP_SIZE+GAP_SIZE, GAP_SIZE+IMAGE_SIZE/2 +fheight/2 + offset);
 	}
 	
+    private ArtistAlbum getArtistAlbum() {
+        String artist = "Artist";
+        String album = "Album";
+        if ( getSelectedCover() != null ) {
+            artist = getSelectedCover().getArtist();
+            int numDiscs = getSelectedCover().getOtherDiscs()==null?0:getSelectedCover().getOtherDiscs().size()+1;
+            if ( numDiscs > 0 ) {
+                artist += " ("+numDiscs+" discs)";
+            }
+            album = CoverDetails.trimDisc(getSelectedCover().getAlbum());
+        }
+        return new ArtistAlbum(artist, album);
+    }
+
     public void setFontBold(Graphics g) {
         Font f = g.getFont();
         //System.out.println("Font name is "+f.getFontName());
@@ -141,5 +159,9 @@ public class PreviewCoverPanel extends JPanel implements DropTargetListener {
 
 	public void setPreview(CoverDetails selectedAt) {
 		previewCover = selectedAt;
+        if ( mainViewer.props.getInt(PropsUtils.ctrlPanelVisible) == 0 ) {
+	        ArtistAlbum aa = getArtistAlbum();
+		    mainViewer.log(aa.artist+" : "+aa.album);
+		}
 	}
 }

@@ -65,10 +65,8 @@ import org.apache.log4j.BasicConfigurator;
 import org.bff.slimserver.SlimAppPlugin;
 import org.bff.slimserver.SlimPlayer;
 import org.bff.slimserver.SlimServer;
-import org.bff.slimserver.SlimSpotifyPlugin;
 import org.bff.slimserver.exception.SlimConnectionException;
 import org.bff.slimserver.musicobjects.app.SlimAvailableApp;
-import org.bff.slimserver.musicobjects.radio.SlimAvailableRadio;
 
 import com.project944.cov.extplayer.NullPlayerInterface;
 import com.project944.cov.extplayer.PlayerInterface;
@@ -93,7 +91,7 @@ public class MainViewer extends JFrame implements MyProgressTracker {
 	private JScrollPane scrollPane;
     private PlayerInterface playerInterface;
     public static final int sideBorder = 20;
-    private PropsUtils props;
+    public PropsUtils props;
     private CoverSource coverSource;
 
     private JLabel statusBar;
@@ -189,75 +187,6 @@ public class MainViewer extends JFrame implements MyProgressTracker {
         });
 		
 		MenuBar mainMenu = new MenuBar();
-		Menu actionsMenu = new Menu("Actions");
-		{
-    		MenuItem item = new MenuItem("Refresh from server");
-    		item.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    executor.execute(new Runnable() {
-                        public void run() {
-                            log("Refresh updates from server...");
-                            List<CoverDetails> updatedCovers = coverSource.refreshFromServer(covers, true, MainViewer.this);
-                            safeSetCovers(updatedCovers);
-                        }
-                    });
-                }
-            });
-    		actionsMenu.add(item);
-		}
-		{
-		    MenuItem item = new MenuItem("Full-refresh from server");
-		    item.addActionListener(new ActionListener() {
-		        public void actionPerformed(ActionEvent e) {
-		            executor.execute(new Runnable() {
-		                public void run() {
-		                    log("Full refresh from server...");
-		                    List<CoverDetails> noCovers = new ArrayList<CoverDetails>();
-		                    List<CoverDetails> updatedCovers = coverSource.refreshFromServer(noCovers, true, MainViewer.this);
-		                    safeSetCovers(updatedCovers);
-		                }
-		            });
-		        }
-		    });
-		    actionsMenu.add(item);
-		}
-		{
-		    MenuItem item = new MenuItem("Clear status");
-		    item.addActionListener(new ActionListener() {
-		        public void actionPerformed(ActionEvent e) {
-                    executor.execute(new Runnable() {
-                        public void run() {
-                            finished();
-                        }
-                    });
-		        }
-		    });
-		    actionsMenu.add(item);
-		}
-		{
-		    MenuItem item = new MenuItem("Change server hostname");
-		    item.addActionListener(new ActionListener() {
-		        public void actionPerformed(ActionEvent e) {
-		            ServerConnections serverConnections = getServerConnections(props, true);
-		            if ( serverConnections != null ) {
-		                playerInterface = getPlayerInterface(props, serverConnections.slimServer, false, MainViewer.this);
-		                slimServer = serverConnections.slimServer;
-		                coverSource = serverConnections.coverSource;
-		            }
-		        }
-		    });
-		    actionsMenu.add(item);
-		}
-		{
-		    MenuItem item = new MenuItem("Change player");
-		    item.addActionListener(new ActionListener() {
-		        public void actionPerformed(ActionEvent e) {
-		            playerInterface = getPlayerInterface(props, slimServer, true, MainViewer.this);
-		        }
-		    });
-		    actionsMenu.add(item);
-		}
-		mainMenu.add(actionsMenu);
 
         Menu viewMenu = new Menu("View");
         {
@@ -273,9 +202,14 @@ public class MainViewer extends JFrame implements MyProgressTracker {
                             if (item.getLabel().startsWith("Show ")) {
                                 topPanel.setVisible(true);
                                 item.setLabel("Hide" + item.getLabel().substring(4));
+                                props.setInt(PropsUtils.ctrlPanelVisible, 1);
+                                props.save();
+                                log("");  // clear status bar
                             } else {
                                 topPanel.setVisible(false);
                                 item.setLabel("Show" + item.getLabel().substring(4));
+                                props.setInt(PropsUtils.ctrlPanelVisible, 0);
+                                props.save();
                             }
                         }
                     });
@@ -285,13 +219,129 @@ public class MainViewer extends JFrame implements MyProgressTracker {
         }
         mainMenu.add(viewMenu);
 
+        Menu playerMenu = new Menu("Player");
+        {
+            MenuItem item = new MenuItem("Play/pause");
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    if ( playerInterface.isPlaying() ) {
+                        playerInterface.pause();
+                    } else {
+                        playerInterface.play();
+                    }
+                }
+            });
+            playerMenu.add(item);
+        }
+        {
+            MenuItem item = new MenuItem("Next track");
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    playerInterface.playNext();
+                }
+            });
+            playerMenu.add(item);
+        }
+        {
+            MenuItem item = new MenuItem("Prev track");
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    playerInterface.playPrev();
+                }
+            });
+            playerMenu.add(item);
+        }
+        {
+            MenuItem item = new MenuItem("Clear play queue");
+            item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    playerInterface.clearPlayQueue();
+                }
+            });
+            playerMenu.add(item);
+        }
+        mainMenu.add(playerMenu);
+        
+		Menu serverMenu = new Menu("Server");
+		{
+    		MenuItem item = new MenuItem("Refresh from server");
+    		item.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    executor.execute(new Runnable() {
+                        public void run() {
+                            log("Refresh updates from server...");
+                            List<CoverDetails> updatedCovers = coverSource.refreshFromServer(covers, true, MainViewer.this);
+                            safeSetCovers(updatedCovers);
+                        }
+                    });
+                }
+            });
+    		serverMenu.add(item);
+		}
+		{
+		    MenuItem item = new MenuItem("Full-refresh from server");
+		    item.addActionListener(new ActionListener() {
+		        public void actionPerformed(ActionEvent e) {
+		            executor.execute(new Runnable() {
+		                public void run() {
+		                    log("Full refresh from server...");
+		                    List<CoverDetails> noCovers = new ArrayList<CoverDetails>();
+		                    List<CoverDetails> updatedCovers = coverSource.refreshFromServer(noCovers, true, MainViewer.this);
+		                    safeSetCovers(updatedCovers);
+		                }
+		            });
+		        }
+		    });
+		    serverMenu.add(item);
+		}
+		{
+		    MenuItem item = new MenuItem("Clear status");
+		    item.addActionListener(new ActionListener() {
+		        public void actionPerformed(ActionEvent e) {
+                    executor.execute(new Runnable() {
+                        public void run() {
+                            finished();
+                        }
+                    });
+		        }
+		    });
+		    serverMenu.add(item);
+		}
+		{
+		    MenuItem item = new MenuItem("Change server hostname");
+		    item.addActionListener(new ActionListener() {
+		        public void actionPerformed(ActionEvent e) {
+		            ServerConnections serverConnections = getServerConnections(props, true);
+		            if ( serverConnections != null ) {
+		                playerInterface = getPlayerInterface(props, serverConnections.slimServer, false, MainViewer.this);
+		                slimServer = serverConnections.slimServer;
+		                coverSource = serverConnections.coverSource;
+		            }
+		        }
+		    });
+		    serverMenu.add(item);
+		}
+		{
+		    MenuItem item = new MenuItem("Change player");
+		    item.addActionListener(new ActionListener() {
+		        public void actionPerformed(ActionEvent e) {
+		            playerInterface = getPlayerInterface(props, slimServer, true, MainViewer.this);
+		        }
+		    });
+		    serverMenu.add(item);
+		}
+		mainMenu.add(serverMenu);
+
 		Menu aboutMenu = new Menu("Help");
 		MenuItem helpMI = new MenuItem("Overview");
 		helpMI.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				final JDialog dlg = new JDialog(MainViewer.this, true);
 				dlg.setLayout(new BorderLayout());
-				String helpTxt = "Overview:\n";
+				String helpTxt = "";
+				helpTxt += "Version: 0.1a \n";
+				helpTxt += "\n";
+				helpTxt += "Overview:\n";
 				helpTxt += "The only argument required is a directory to scan.  This assumes that music and cover images (jpg and tiff only) are stored under  artist/album directory structure from the given directory.  e.g. If given  /tmp  then would expect to find some art in the directory  /tmp/prince/Purple-Rain  .\n";
 				helpTxt += "o  The area above the dark bar is the main cover layout area.\n";
 				helpTxt += "o  The area below the dark bar is the spare shelf, where new covers which have not yet been layed out go, or covers that have been dragged off screen etc\n";
@@ -431,7 +481,11 @@ public class MainViewer extends JFrame implements MyProgressTracker {
 		previewAndScaler.setOpaque(true); previewAndScaler.setBackground(SystemColor.window);
         previewAndScaler.setBorder(BorderFactory.createMatteBorder(0, 0, sideBorder/2, 0, SystemColor.window));
 		
-        imagesPanel = new ImagesPanel(this, covers, previewCover, props.getInt(PropsUtils.iconSize));
+        imagesPanel = new ImagesPanel(this, covers, previewCover,
+                props.getInt(PropsUtils.iconSize),
+                props.getInt(PropsUtils.imagePanelWidth),
+                props.getInt(PropsUtils.imagePanelHeight)
+                );
         scrollPane = new JScrollPane(imagesPanel);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         imagesPanel.setScrollPane(scrollPane);
@@ -499,11 +553,16 @@ public class MainViewer extends JFrame implements MyProgressTracker {
                 boolean editMode = editModeCheckbox.isSelected();
                 sliderLabel.setVisible(editMode);
                 slider.setVisible(editMode);
+                imagesPanel.resetMinimumSize(15, 3);  // So can shrink
                 imagesPanel.setEditMode(editMode);
             }
         });
 
 		topPanel.add(previewAndScaler);
+		if ( props.getInt(PropsUtils.ctrlPanelVisible) == 0 ) {
+		    topPanel.setVisible(false);
+		}
+
 		mainPanel.add(topPanel, BorderLayout.NORTH);
 	      
 		scrollPane.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, SystemColor.controlShadow, SystemColor.controlShadow));
@@ -545,7 +604,7 @@ public class MainViewer extends JFrame implements MyProgressTracker {
 	public void saveLayout() {
 		try {
 			coversLayoutManager.save(covers);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -700,11 +759,11 @@ public class MainViewer extends JFrame implements MyProgressTracker {
             }
         }
 
-        SlimSpotifyPlugin plugin = new SlimSpotifyPlugin(slimServer);
-        Collection<SlimAvailableRadio> radios = plugin.getAvailableRadios();
-        for (SlimAvailableRadio radio : radios) {
-            System.out.println("Got radio of "+radio.getName());
-        }
+//        SlimSpotifyPlugin plugin = new SlimSpotifyPlugin(slimServer);
+//        Collection<SlimAvailableRadio> radios = plugin.getAvailableRadios();
+//        for (SlimAvailableRadio radio : radios) {
+//            System.out.println("Got radio of "+radio.getName());
+//        }
         
         System.exit(1);
     }

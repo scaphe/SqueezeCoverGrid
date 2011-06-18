@@ -13,6 +13,9 @@ public class PropsUtils {
     public final static String iconSize = "iconSize";
     public final static String serverHost = "serverHost";
     public final static String playerName = "*";
+    public final static String ctrlPanelVisible = "ctrlPanelVisible";
+    public final static String imagePanelWidth = "imagePanelWidth";
+    public final static String imagePanelHeight = "imagePanelHeight";
     
     private Properties props = new Properties();
     
@@ -27,6 +30,9 @@ public class PropsUtils {
         props.setProperty(iconSize, "48");
         props.setProperty(serverHost, "127.0.0.1");
         props.setProperty(playerName, "*");
+        props.setProperty(ctrlPanelVisible, "1");
+        props.setProperty(imagePanelWidth,  "15");
+        props.setProperty(imagePanelHeight, "5");
     }
     
     public int getInt(String propName) {

@@ -20,6 +20,7 @@ import javax.swing.JScrollPane;
 import com.project944.cov.actions.UndoableAction;
 import com.project944.cov.extplayer.PlayerInterface;
 import com.project944.cov.states.StandardStateHandler;
+import com.project944.cov.utils.PropsUtils;
 
 public class ImagesPanel extends JPanel {
     private static CoverDetails blankCoverDetails;
@@ -36,8 +37,11 @@ public class ImagesPanel extends JPanel {
     static private int ygap =  8;
     static private int xgap =  4;
 
-    private int maxX = 15;
-    private int maxY = 3;
+    private int initialMaxX;
+    private int initialMaxY;
+    
+    public int maxX = 15;
+    public int maxY = 3;
 
     public boolean rubberBanding = false;
     
@@ -57,14 +61,23 @@ public class ImagesPanel extends JPanel {
     public ImagesPanel(MainViewer mainViewer,
                        List<CoverDetails> covers,
                        PreviewCoverPanel previewCover,
-                       int sz) {
+                       int sz,
+                       int initialMaxX,
+                       int initialMaxY) {
         this.mainViewer = mainViewer;
         this.covers = covers;
         this.previewCover = previewCover;
         this.eventHandler = new StandardStateHandler(this);
         this.sz = sz;
+        this.initialMaxX = initialMaxX;
+        this.initialMaxY = initialMaxY;
         setupMouseEvents();
         setOpaque(true); setBackground(SystemColor.window);
+    }
+    
+    public void resetMinimumSize(int x, int y) {
+        initialMaxX = x;
+        initialMaxY = y;
     }
     
     public PlayerInterface getPlayerInterface() {
@@ -102,8 +115,9 @@ public class ImagesPanel extends JPanel {
         // Draw blank images all along each line as we get to the line
         // Get max Y, so know where to put spares shelf
         int prevMaxY = maxY;
-        maxY = 3;
-        maxX = 15;
+        maxY = initialMaxY;
+        maxX = initialMaxX;
+        int basicGridMaxY = 0;
         boolean firstSpare = true;
         int sparesX = 0;
         int sparesBoundryY = -1;
@@ -111,6 +125,9 @@ public class ImagesPanel extends JPanel {
         int hiddenX = 0;
         int hiddenBoundryY = -1;
         for (int pass = 0; pass < 3; pass++) {
+            if ( pass == 1 ) {
+                basicGridMaxY = maxY;
+            }
             for (CoverDetails cd : covers) {
                 if ( cd != null ) {
                     if ( cd.isPartOfOtherCover() ) {
@@ -221,6 +238,13 @@ public class ImagesPanel extends JPanel {
             if ( startP.x > endP.x ) { temp = startP.x; startP.x = endP.x; endP.x = temp; }
             if ( startP.y > endP.y ) { temp = startP.y; startP.y = endP.y; endP.y = temp; }
             g.drawRect(startP.x, startP.y, endP.x-startP.x, endP.y-startP.y);
+        }
+        
+        if ( mainViewer.props.getInt(PropsUtils.imagePanelWidth) != maxX-1 ||
+                mainViewer.props.getInt(PropsUtils.imagePanelHeight) != basicGridMaxY ) {
+            mainViewer.props.setInt(PropsUtils.imagePanelWidth, maxX-1);
+            mainViewer.props.setInt(PropsUtils.imagePanelHeight, basicGridMaxY);
+            mainViewer.props.save();
         }
     }
     

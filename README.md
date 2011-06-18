@@ -12,7 +12,7 @@ Note that this application comes with absolutely no guarentee, other than, I use
 
 Build (mac application in directory macPkg, copy to where you like - thanks to http://www.informagen.com/JarBundler/):
 
-    > ant macOS
+    > ant clean dist macOS
 
 Run:
 
@@ -34,7 +34,7 @@ From shell
 
 Build:
 
-    > ant
+    > ant clean dist
 
 Run:
 
@@ -46,7 +46,7 @@ From command window
 
 Build:
 
-    > ant
+    > ant clean dist
 
 Run
 
