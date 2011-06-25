@@ -4,7 +4,7 @@ Shows a grid of cover art of all albums sourced from SqueezeboxServer.
 Allows you to play them on a connected SqueezeboxTouch player via right click menu, choose album or track.
 Trying to bring a more visual experience akin to browsing a shelf of cds to SqueezeBox.
 
-![Screenshot](sqz-cav1.png "Screenshot")
+![Screenshot](https://github.com/scaphe/SqueezeCoverGrid/blob/master/sqz-cav1.png"Screenshot")
 
 # Build/Install
 
