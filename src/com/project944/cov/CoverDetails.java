@@ -62,6 +62,9 @@ public class CoverDetails {
 			String filename = imageFilename;
 			if ( imageFilename.startsWith("/com/project944/cov/resources") ) {
 				url = CoverDetails.class.getResource(imageFilename);
+				if ( url == null ) {
+				    System.out.println("ERROR: Failed to find resource of ["+imageFilename+"]");
+				}
 				filename = url.getFile();
 			} else {
 			    url = new URL(filename);

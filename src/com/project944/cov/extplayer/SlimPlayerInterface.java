@@ -20,6 +20,7 @@ import org.bff.slimserver.musicobjects.SlimAlbum;
 import org.bff.slimserver.musicobjects.SlimSong;
 
 import com.project944.cov.CoverDetails;
+import com.project944.cov.TrackDetails;
 import com.project944.cov.sources.SlimCoverSource;
 
 public class SlimPlayerInterface implements PlayerInterface {
@@ -72,10 +73,17 @@ public class SlimPlayerInterface implements PlayerInterface {
         if ( album != null ) {
             try {
                 if ( !isPlaying() || playImmediately ) {
+                    boolean wantNext = playList.getItemCount() > 0;
                     playList.insertAlbum(album);
-                    playList.playNext();
+                    if ( wantNext ) {
+                        playList.playNext();
+                    }
                 } else {
-                    playList.insertAlbum(album);
+                    List<TrackDetails> tracks = cover.getTrackNames();
+                    for (TrackDetails track : tracks) {
+                        enqueueTrack(cover, track.getTitle(), false);
+                    }
+                    //playList.insertAlbum(album);
                 }
             } catch (SlimException e) {
                 e.printStackTrace();
