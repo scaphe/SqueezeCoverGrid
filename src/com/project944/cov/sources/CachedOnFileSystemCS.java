@@ -5,9 +5,13 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -54,7 +58,8 @@ public class CachedOnFileSystemCS implements CoverSource {
             File coversFile = getCoversFile();
             if ( coversFile.isFile() ) {
                 // Read back image
-                BufferedReader in = new BufferedReader(new FileReader(coversFile));
+                InputStreamReader is = new InputStreamReader(new FileInputStream(coversFile), "UTF-8");
+                BufferedReader in = new BufferedReader(is); // new FileReader(coversFile));
                 while ( true ) {
                     String line = in.readLine();
                     if ( line == null ) {
@@ -102,12 +107,13 @@ public class CachedOnFileSystemCS implements CoverSource {
 
     public void saveCovers(List<CoverDetails> covers, MyLogger logger) throws Exception {
         File coversFile = getCoversFile();
-        FileWriter writer = new FileWriter(coversFile);
+        FileOutputStream fos = new FileOutputStream(coversFile);
         if ( !coversFile.exists() || coversFile.isFile() ) {
             for (CoverDetails cover : covers) {
                 JSONObject json = ser.serialize(cover);
-                json.write(writer);
-                writer.write("\n");
+                StringWriter sw = new StringWriter();
+                json.write(sw);
+                fos.write((sw+"\n").getBytes("UTF-8"));
                 int id = cover.getId();
                 Image image = cover.getImage();
                 if (image != null) {
@@ -127,7 +133,7 @@ public class CachedOnFileSystemCS implements CoverSource {
                 }
             }
         }
-        writer.close();
+        fos.close();
     }
 
     public static BufferedImage imageToBufferedImage(Image im) {

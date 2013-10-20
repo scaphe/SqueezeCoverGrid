@@ -3,10 +3,15 @@ package com.project944.cov.layoutmanagers;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -34,8 +39,10 @@ public class FilePersistedLayout implements CoversLayoutManager {
 		File file = new File(PropsUtils.getCacheDir()+"/"+filename);
 		if ( file.exists() ) {
 			try {
+			    FileInputStream fis = new FileInputStream(file);
+			    InputStreamReader is = new InputStreamReader(fis, "UTF-8");
 				FileReader fr = new FileReader(file);
-				BufferedReader rd = new BufferedReader(fr);
+				BufferedReader rd = new BufferedReader(is);
 				String line = rd.readLine();
 				int lineNum = 0;
 				if ( line.equals("JSON") ) {
@@ -47,6 +54,7 @@ public class FilePersistedLayout implements CoversLayoutManager {
     	                    JSONObject json = new JSONObject(new JSONTokener(line));
     				        LayoutDetails details = ser.deserialize(json);
                             // Find correct album
+    				        boolean found = false;
                             for (CoverDetails cd : covers) {
                                 if ( (cd.getArtist().equals(details.artist) || details.variousArtists )
                                         && cd.getAlbum().equals(details.album) ) {
@@ -54,8 +62,12 @@ public class FilePersistedLayout implements CoversLayoutManager {
                                     cd.setHidden(details.hidden);
                                     cd.setVariousArtists(details.variousArtists);
                                     cd.setXY(details.x, details.y);
+                                    found = true;
                                     break;
                                 }
+                            }
+                            if ( !found ) {
+                                System.out.println("Failed to find ["+details.artist+"], ["+details.variousArtists+"], ["+details.album+"]");
                             }
 				        } catch (Exception e) {
 				            System.out.println("Failed to parse line "+lineNum+" in file "+file.getAbsolutePath());
@@ -91,6 +103,10 @@ public class FilePersistedLayout implements CoversLayoutManager {
     				}
 				}
 				CoverDetails.fixMultiDiscAlbums(covers);
+				
+                rd.close();
+                is.close();
+                fis.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -101,31 +117,14 @@ public class FilePersistedLayout implements CoversLayoutManager {
 
 	public void save(List<CoverDetails> covers) throws Exception {
 		File file = new File(PropsUtils.getCacheDir()+"/"+filename);
-		FileWriter fw = new FileWriter(file);
-		fw.write("JSON\n");
-		BufferedWriter bw = new BufferedWriter(fw);
+		FileOutputStream fos = new FileOutputStream(file);
+		fos.write("JSON\n".getBytes("UTF-8"));
 		for (CoverDetails cd : covers) {
             JSONObject json = ser.serialize(cd);
-            json.write(fw);
-            fw.write("\n");
-//			String str = "";
-//			str += cd.getArtist();
-//			str += "|";
-//			str += cd.getAlbum();
-//			str += "|";
-//			str += cd.getX();
-//			str += "|";
-//			str += cd.getY();
-//			str += "|";
-//			str += cd.isUndefinedPosition();
-//			str += "|";
-//			str += cd.isHidden();
-//			str += "|";
-//			str += cd.isVariousArtists();
-//			str += "\n";
-//			bw.write(str);
+            StringWriter sw = new StringWriter();
+            json.write(sw);
+            fos.write((sw+"\n").getBytes("UTF-8"));
 		}
-		bw.close();
-		fw.close();
+		fos.close();
 	}
 }

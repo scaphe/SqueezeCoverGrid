@@ -102,6 +102,7 @@ public class SlimCoverSource implements CoverSource {
                     covers.add(matchingPrevCd);
                     continue;
                 }
+                System.out.println("Got new album of "+id+", "+artistName+", "+albumTitle);
 //                    System.out.println("Image url for "+album.getTitle()+", id=["+album.getId()+"] is "+album.getImageUrl());
                 Image image = album.getImage();
                 int disc = album.getDisc();
